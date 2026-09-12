@@ -25,6 +25,41 @@ const MIME = {
 
 const server = http.createServer(function (req, res) {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
+
+  // POST /save?file=xxx.html —— 把编辑器里改好的 HTML 写回源文件（仅本机）
+  if (req.method === 'POST' && urlPath === '/save') {
+    const chunks = [];
+    req.on('data', function (c) { chunks.push(c); });
+    req.on('end', function () {
+      const body = Buffer.concat(chunks);
+      let fname = 'presentation.html';
+      try { fname = new URL(req.url, 'http://localhost').searchParams.get('file') || fname; } catch (e) {}
+      fname = path.basename(fname);               // 只取文件名，防目录穿越
+      if (!/\.html?$/i.test(fname)) {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'only .html allowed' }));
+        return;
+      }
+      const fp = path.normalize(path.join(ROOT, fname));
+      if (fp.indexOf(ROOT) !== 0) {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'forbidden' }));
+        return;
+      }
+      fs.writeFile(fp, body, function (err) {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+          return;
+        }
+        console.log('已保存: ' + fname + ' (' + body.length + ' bytes)');
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: true, path: fname, bytes: body.length }));
+      });
+    });
+    return;
+  }
+
   if (urlPath === '/') urlPath = '/presentation.html';
 
   // 防目录穿越

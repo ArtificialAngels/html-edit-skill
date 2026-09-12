@@ -1068,6 +1068,7 @@ body {
   <span class="eb-tag" id="eb-selected-tag">未选中</span>
   <span class="eb-hint">点击选中 | 拖拽移动 | U父级 D子级 | Ctrl+Z撤销 | Ctrl+Y重做 | 双击改字 | S导出 | E退出</span>
   <span id="undo-status" style="margin-left:auto;color:#4caf50;font-weight:bold;font-size:12px;"></span>
+  <button class="eb-btn" onclick="window.__editor.save()">保存</button>
   <button class="eb-btn" onclick="window.__editor.export()">导出HTML</button>
   <button class="eb-btn" onclick="window.__editor.exit()">退出</button>
 </div>
@@ -1883,6 +1884,36 @@ body {
       if (s.kfTo) el.dataset.customTo = s.kfTo; else delete el.dataset.customTo;
       syncKeyframes(el);
       if (el === selected) fillPanel(el);
+    },
+    save: function() {
+      // 先清理编辑态痕迹，得到干净 HTML（与 export 同一套清理）
+      bar.style.display = 'none';
+      panel.style.display = 'none';
+      breadcrumb.style.display = 'none';
+      removeResizeHandles();
+      if (selected) selected.classList.remove('edit-selected');
+      var els = document.querySelectorAll('.edit-clickable');
+      for (var i = 0; i < els.length; i++) els[i].classList.remove('edit-clickable');
+      document.body.classList.remove('edit-mode');
+      var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      // 立即恢复编辑态，不打断用户
+      bar.style.display = '';
+      breadcrumb.style.display = '';
+      document.body.classList.add('edit-mode');
+      markClickable();
+      // 写回当前页面文件（由 preview-server.js 的 POST /save 落盘）
+      var fname = (location.pathname.split('/').pop() || 'presentation.html');
+      fetch('/save?file=' + encodeURIComponent(fname), {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        body: html
+      }).then(function (r) { return r.json(); })
+        .then(function (d) {
+          showUndoStatus(d.ok ? ('已保存到 ' + d.path) : ('保存失败: ' + (d.error || '')), d.ok ? '#4caf50' : '#f44336');
+        })
+        .catch(function (e) {
+          showUndoStatus('保存失败（需通过 preview-server.js 打开）: ' + e.message, '#f44336');
+        });
     },
     export: function() {
       bar.style.display = 'none';
