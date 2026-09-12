@@ -2,7 +2,7 @@
 
 单文件、零构建的 **HTML 演示文稿模板**（1920×1080）。一个 `presentation.html` 即完整可播放：内置自适应舞台、20+ 动画原语、分步揭示，以及内建的可视化编辑器（点选/拖拽/缩放/改字/撤销/导出）。
 
-![cover](docs/screenshot-cover.png)
+![编辑模式](docs/screenshot-editor.png)
 
 ## 依赖需求
 
@@ -28,7 +28,7 @@ html-keynote-deck/
 ├─ AGENT.md            # 其它 agent 的快速上手手册
 ├─ README.md
 ├─ docs/
-│  └─ screenshot-cover.png
+│  └─ screenshot-editor.png
 └─ assets/
    ├─ presentation.html   # 模板本体（复制它做新演示）
    ├─ preview-server.js   # 本机静态服务器（127.0.0.1:8765）
