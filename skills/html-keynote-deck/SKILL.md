@@ -41,8 +41,9 @@ node preview-server.js
 # 浏览器打开 http://127.0.0.1:8765/presentation.html
 ```
 
-> 也可以直接双击 `presentation.html` 用 `file://` 打开；本地服务器仅用于避免个别浏览器
-> 对 `file://` 的限制，二者渲染一致。
+> 也可以直接双击 `presentation.html` 用 `file://` 打开，二者**渲染**一致；但
+> **编辑写盘**只有通过本地服务器才可用（`POST /save`）。建议固定用 bat/服务器
+> 这一个入口——同一文件混用两种打开方式是内容对不上的常见根源。
 
 ## 播放与编辑操作
 

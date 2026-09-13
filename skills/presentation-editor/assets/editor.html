@@ -3,10 +3,10 @@
   <span class="eb-tag" id="eb-selected-tag">未选中</span>
   <span class="eb-hint">点击选中 | 拖拽移动 | U父级 D子级 | Ctrl+Z撤销 | Ctrl+Y重做 | 双击改字 | E退出</span>
   <span id="undo-status" style="margin-left:auto;color:#4caf50;font-weight:bold;font-size:12px;"></span>
-  <span id="autosave-status" title="修改会自动保存到浏览器本地，刷新后自动恢复">自动保存：就绪</span>
+  <span id="autosave-status" title="通过预览服务器打开时，修改会自动写回源文件；file:// 直开时退回浏览器本地快照">自动保存：就绪</span>
   <button class="eb-btn eb-btn-primary" onclick="window.__editor.export()">导出HTML</button>
   <button class="eb-btn" onclick="window.__editor.saveLocal()">保存</button>
-  <button class="eb-btn" onclick="window.__editor.revertLocal()" title="丢弃本地保存，恢复到文件原始状态">还原</button>
+  <button class="eb-btn" onclick="window.__editor.revertLocal()" title="恢复到原稿备份（服务器模式）；丢弃本地存档（file:// 模式）">还原</button>
   <button class="eb-btn" onclick="window.__editor.exit()">退出</button>
 </div>
 <div id="prop-panel">

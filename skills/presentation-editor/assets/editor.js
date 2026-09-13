@@ -1060,13 +1060,14 @@
   window.__editor = editor;
 
   /* ==========================================================================
-     本地自动保存 / 恢复
+     自动保存：写盘优先，本地快照兜底
      --------------------------------------------------------------------------
-     问题：编辑改动只存在内存中，刷新即丢失（此前必须手动「导出HTML」才落盘）。
-     方案：把主要内容节点的内联样式与 data-* 以 JSON 存入 localStorage，
-           页面加载时自动回放；同时保留「导出HTML」用于产出独立文件。
-     说明：localStorage 上限约 5MB，只存差异快照（不含整页 HTML），足够用。
-     注意：file:// 下部分浏览器隔离 localStorage，若写入失败会提示用「导出」。
+     通过本地预览服务器（http://127.0.0.1 或 localhost）访问时：编辑改动防抖后
+     把整页 HTML 经 POST /save 直接写回当前源文件——磁盘文件本身就是存档，
+     刷新、换浏览器看到的都是同一份最新内容，不依赖 localStorage。
+     教训：此前把快照存 localStorage，而 http:// 与 file:// 是互相隔离的源、
+     各存一份快照，同一个文件两种打开方式的内容会对不上。
+     仅当 file:// 直开（没有 /save 接口）时，才退回 localStorage 差异快照。
      ========================================================================== */
   // 用页面身份（标题+页数）做命名空间，避免同一浏览器打开不同 deck 时串数据
   function deckFingerprint() {
@@ -1100,6 +1101,81 @@
     if (!autosaveStatusEl) return;
     autosaveStatusEl.className = state || '';
     autosaveStatusEl.textContent = '自动保存：' + text;
+  }
+
+  var canWriteDisk = location.protocol === 'http:' &&
+    (location.hostname === '127.0.0.1' || location.hostname === 'localhost');
+  var pendingHtml = null;     // 待写盘的最新内容；高频保存合并，只写最后一份
+  var writingDisk = false;
+  var lastSavedHtml = null;   // 与磁盘一致的最新内容，用于跳过无变化的写入
+  var backupReady = false;
+
+  function currentFileName() {
+    return decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
+  }
+  var BACKUP_PATH = currentFileName().replace(/\.html?$/i, '') + '.backup.html';
+
+  // 磁盘模式：序列化整页 HTML（同步执行不会渲染中间状态，无闪烁），并恢复编辑态
+  function buildPageHTML() {
+    var panelShown = panel.style.display;
+    bar.style.display = 'none';
+    panel.style.display = 'none';
+    breadcrumb.style.display = 'none';
+    removeResizeHandles();
+    if (selected) selected.classList.remove('edit-selected');
+    var els = document.querySelectorAll('.edit-clickable');
+    for (var i = 0; i < els.length; i++) els[i].classList.remove('edit-clickable');
+    document.body.classList.remove('edit-mode');
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    bar.style.display = '';
+    panel.style.display = panelShown;
+    breadcrumb.style.display = '';
+    document.body.classList.add('edit-mode');
+    markClickable();
+    // 恢复选中态（removeResizeHandles 会连选中高亮一起摘掉）
+    if (selected) {
+      selected.classList.add('edit-selected');
+      updateResizeHandles();
+    }
+    return html;
+  }
+
+  function flushToDisk() {
+    if (writingDisk || pendingHtml === null) return;
+    var payload = pendingHtml;
+    pendingHtml = null;
+    writingDisk = true;
+    // 同时带 file / path 两个参数名，兼容两种服务器实现
+    fetch('/save?file=' + encodeURIComponent(currentFileName()) +
+          '&path=' + encodeURIComponent(currentFileName()),
+          { method: 'POST', body: payload })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function () {
+        writingDisk = false;
+        lastSavedHtml = payload;
+        setAutosaveStatus('saved', '已写入文件 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+        flushToDisk();
+      })
+      .catch(function (err) {
+        writingDisk = false;
+        setAutosaveStatus('error', '写入失败');
+        showUndoStatus('写盘失败：' + err.message + '，请通过本地预览服务器打开', '#e57373');
+      });
+  }
+
+  // 首次使用前准备原稿备份（供「还原」）；备份只生成一次，删除该文件可重设基线
+  if (canWriteDisk) {
+    fetch(BACKUP_PATH).then(function (r) {
+      if (r.ok) { backupReady = true; return null; }
+      return fetch(currentFileName()).then(function (r2) {
+        if (!r2.ok) throw new Error('HTTP ' + r2.status);
+        return r2.text();
+      }).then(function (text) {
+        return fetch('/save?file=' + encodeURIComponent(BACKUP_PATH) +
+                     '&path=' + encodeURIComponent(BACKUP_PATH),
+                     { method: 'POST', body: text });
+      }).then(function (r3) { backupReady = r3.ok; });
+    }).catch(function () {});
   }
 
   // 收集需要持久化的内容节点（含动画关键帧元数据）
@@ -1199,6 +1275,19 @@
 
   function saveLocal(showMsg) {
     if (!autosaveEnabled) return;
+    if (canWriteDisk) {
+      var html = buildPageHTML();
+      // 无变化不重复写盘（序列化含分页状态，翻页后会自然重新写入）
+      if (html === lastSavedHtml && !showMsg) {
+        setAutosaveStatus('saved', '无新的修改');
+        return;
+      }
+      pendingHtml = html;
+      flushToDisk();
+      if (showMsg) showUndoStatus('已直接写入本地文件', '#4caf50');
+      return;
+    }
+    // file:// 兜底：无 /save 接口，退回 localStorage 差异快照
     try {
       var data = collectState();
       // 无差异时不覆盖已有存档：避免撤销回原样或状态抖动导致存档被清空。
@@ -1211,7 +1300,7 @@
       // 同步一份草稿，用于关闭页面前抢救
       try { localStorage.setItem(DRAFT_KEY, json); } catch (e) {}
       setAutosaveStatus('saved', '已保存 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
-      if (showMsg) showUndoStatus('已保存到本地（刷新后自动恢复）', '#4caf50');
+      if (showMsg) showUndoStatus('已保存到浏览器本地（建议用预览服务器打开以直接写盘）', '#4caf50');
     } catch (e) {
       setAutosaveStatus('error', '保存失败');
       if (showMsg) showUndoStatus('本地保存失败：' + (e.name === 'QuotaExceededError' ? '超出容量' : '浏览器限制') + '，请用「导出HTML」', '#e57373');
@@ -1233,10 +1322,27 @@
   editor.saveLocal = function () { saveLocal(true); };
 
   editor.revertLocal = function () {
-    if (!confirm('确定丢弃所有本地编辑，恢复到文件原始状态？此操作不可撤销')) return;
-    // 关键：先关闭自动保存，否则 reload 触发的 beforeunload 会把修改重新写回存档
+    // 关键：先关闭自动保存，否则 reload 触发的 beforeunload 会把修改重新写回
     autosaveEnabled = false;
     clearTimeout(autosaveTimer);
+    if (canWriteDisk) {
+      if (!backupReady) { alert('没有可用的原稿备份（' + BACKUP_PATH + '），无法还原。'); autosaveEnabled = true; return; }
+      if (!confirm('确定丢弃所有编辑，恢复到原稿备份？此操作不可撤销')) { autosaveEnabled = true; return; }
+      fetch(BACKUP_PATH)
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function (text) {
+          return fetch('/save?file=' + encodeURIComponent(currentFileName()) +
+                       '&path=' + encodeURIComponent(currentFileName()),
+                       { method: 'POST', body: text });
+        })
+        .then(function () { location.reload(); })
+        .catch(function (err) {
+          autosaveEnabled = true;
+          alert('还原失败：' + err.message);
+        });
+      return;
+    }
+    if (!confirm('确定丢弃所有本地编辑，恢复到文件原始状态？此操作不可撤销')) { autosaveEnabled = true; return; }
     try {
       localStorage.removeItem(AUTOSAVE_KEY);
       localStorage.removeItem(DRAFT_KEY);
@@ -1254,8 +1360,9 @@
     try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(DRAFT_KEY); } catch (e) {}
   };
 
-  // 启动时自动恢复
+  // 启动时：磁盘模式以文件为准（不回放任何快照），file:// 模式回放本地快照
   (function restoreOnLoad() {
+    if (canWriteDisk) { setAutosaveStatus('', '就绪（改动直接写入文件）'); return; }
     captureBaseline();              // 先记录原稿文本，再回放修改
     var raw = null;
     try { raw = localStorage.getItem(AUTOSAVE_KEY); } catch (e) {}

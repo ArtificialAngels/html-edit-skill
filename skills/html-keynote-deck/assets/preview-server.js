@@ -33,7 +33,10 @@ const server = http.createServer(function (req, res) {
     req.on('end', function () {
       const body = Buffer.concat(chunks);
       let fname = 'presentation.html';
-      try { fname = new URL(req.url, 'http://localhost').searchParams.get('file') || fname; } catch (e) {}
+      try {
+        const q = new URL(req.url, 'http://localhost').searchParams;
+        fname = q.get('file') || q.get('path') || fname;   // 兼容两种参数名
+      } catch (e) {}
       fname = path.basename(fname);               // 只取文件名，防目录穿越
       if (!/\.html?$/i.test(fname)) {
         res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -76,7 +79,12 @@ const server = http.createServer(function (req, res) {
       res.end('404 not found: ' + urlPath);
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream' });
+    res.writeHead(200, {
+      'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.end(data);
   });
 });
