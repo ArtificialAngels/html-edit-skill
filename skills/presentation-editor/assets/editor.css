@@ -1,0 +1,77 @@
+  #editor-bar { position: fixed; top: 0; left: 0; right: 0; height: 32px; background: rgba(20,20,40,0.96); color: #e0c488; font-family: monospace; font-size: 12px; display: none; align-items: center; padding: 0 12px; z-index: 99999; border-bottom: 1px solid #4a4a6e; gap: 10px; }
+  #editor-bar.show { display: flex; }
+  #editor-bar .eb-title { font-weight: 700; color: #4fc3f7; }
+  #editor-bar .eb-hint { opacity: 0.65; font-size: 11px; flex: 1; }
+  #editor-bar .eb-btn { background: #2a2a4e; color: #e0c488; border: 1px solid #4a4a6e; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+  #editor-bar .eb-btn:hover { background: #3a3a5e; }
+  #editor-bar .eb-btn-primary { background: #1a4a2e; color: #81c784; border-color: #2a6a4e; font-weight: 700; }
+  #editor-bar .eb-btn-primary:hover { background: #2a5a3e; }
+  #autosave-status { font-size: 11px; font-family: monospace; color: #8a93a5; white-space: nowrap; padding: 2px 8px; border-radius: 3px; background: rgba(85,103,154,.14); }
+  #autosave-status.saved { color: #81c784; background: rgba(76,175,80,.16); }
+  #autosave-status.dirty { color: #e0c488; background: rgba(184,148,90,.18); }
+  #autosave-status.error { color: #e57373; background: rgba(229,115,115,.16); }
+  #editor-bar .eb-tag { background: #1a3a4e; color: #4fc3f7; padding: 2px 8px; border-radius: 3px; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #prop-panel { position: fixed; top: 32px; right: 0; width: 260px; background: rgba(20,20,40,0.96); color: #ccc; font-family: monospace; font-size: 11px; z-index: 99998; display: none; padding: 0 10px 8px; border-left: 1px solid #3a3a5e; border-bottom: 1px solid #3a3a5e; max-height: calc(100vh - 56px); overflow-y: auto; }
+  #prop-panel.show { display: block; }
+  /* 头部：标题 + 折叠按钮 */
+  #pp-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 0 -10px 6px; padding: 6px 10px; background: rgba(16,16,34,0.98); border-bottom: 1px solid #3a3a5e; }
+  #pp-header-title { color: #4fc3f7; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+  #pp-toggle { background: #24304e; color: #9fb8d8; border: 1px solid #3a5a7e; border-radius: 3px; padding: 2px 8px; font-size: 10px; font-family: monospace; cursor: pointer; white-space: nowrap; }
+  #pp-toggle:hover { background: #33415e; color: #cfe4f7; }
+  /* 折叠态：只留头部，按钮固定悬浮便于随时展开 */
+  #prop-panel.collapsed { width: auto; max-height: none; overflow: visible; padding: 0; border-bottom: none; background: transparent; }
+  #prop-panel.collapsed #pp-body { display: none; }
+  #prop-panel.collapsed #pp-header { margin: 0; padding: 6px 10px; background: rgba(20,20,40,0.96); border: 1px solid #3a3a5e; border-radius: 4px 0 0 4px; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  #prop-panel label { display: block; margin-bottom: 2px; color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  #prop-panel input, #prop-panel textarea, #prop-panel select { width: 100%; background: #0a0a1e; color: #e0c488; border: 1px solid #3a3a5e; padding: 3px 5px; font-size: 11px; font-family: monospace; margin-bottom: 5px; border-radius: 2px; box-sizing: border-box; }
+  #prop-panel select.pp-select { color: #e0c488; }
+  #prop-panel textarea { min-height: 36px; resize: vertical; }
+  #prop-panel .pp-row { display: flex; gap: 4px; }
+  #prop-panel .pp-row input { flex: 1; }
+  #prop-panel .pp-section { margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid #2a2a4e; }
+  #prop-panel .pp-section-title { color: #4fc3f7; font-size: 10px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+  #prop-panel .pp-apply { background: #1a4a2e; color: #81c784; border: 1px solid #2a6a4e; padding: 3px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; width: 100%; margin-top: 4px; }
+  #prop-panel .pp-apply:hover { background: #2a5a3e; }
+  #prop-panel .pp-reset { background: #4a2a2a; color: #e57373; border: 1px solid #6a3a3a; padding: 3px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; width: 100%; margin-top: 3px; }
+  #prop-panel .pp-reset:hover { background: #5a3a3a; }
+  #prop-panel .pp-preview { background: #2a3a4e; color: #64b5f6; border: 1px solid #3a5a6e; padding: 3px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; width: 100%; margin-top: 3px; }
+  #prop-panel .pp-preview:hover { background: #3a4a5e; }
+  #prop-panel .kf-row { display: flex; gap: 4px; margin-bottom: 4px; }
+  #prop-panel .kf-from, #prop-panel .kf-to { flex: 1; background: #0a0a1e; border: 1px solid #3a3a5e; border-radius: 2px; padding: 4px; font-size: 10px; }
+  #prop-panel .kf-label { color: #888; font-size: 9px; margin-bottom: 2px; }
+  #prop-panel .kf-val { color: #e0c488; word-break: break-all; }
+  .edit-selected { outline: 2px solid #4fc3f7 !important; outline-offset: 1px; }
+  .edit-dragging { opacity: 0.8; cursor: grabbing !important; }
+
+  /* 拖动/缩放期间禁用过渡动画，保证元素严格跟手 */
+  .edit-no-transition, .edit-no-transition * { transition: none !important; }
+
+  /* resize 手柄 */
+  .edit-rh { position: fixed; width: 10px; height: 10px; background: #4fc3f7; border: 2px solid #fff; border-radius: 2px; z-index: 99999; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+  body.edit-mode .edit-rh { cursor: pointer !important; }
+  body.edit-mode .edit-rh[data-dir="nw"], body.edit-mode .edit-rh[data-dir="se"] { cursor: nwse-resize !important; }
+  body.edit-mode .edit-rh[data-dir="ne"], body.edit-mode .edit-rh[data-dir="sw"] { cursor: nesw-resize !important; }
+  body.edit-mode .edit-rh[data-dir="n"], body.edit-mode .edit-rh[data-dir="s"] { cursor: ns-resize !important; }
+  body.edit-mode .edit-rh[data-dir="e"], body.edit-mode .edit-rh[data-dir="w"] { cursor: ew-resize !important; }
+  body.edit-mode { cursor: default !important; }
+  body.edit-mode * { cursor: default !important; }
+  body.edit-mode .edit-clickable { cursor: pointer !important; }
+  body.edit-mode .edit-clickable:hover { outline: 1px dashed rgba(224,196,136,0.6); }
+  body.edit-mode [contenteditable="true"] { cursor: text !important; outline: 2px solid #4fc3f7 !important; }
+  #edit-breadcrumb { position: fixed; bottom: 0; left: 0; right: 0; height: 24px; background: rgba(20,20,40,0.96); color: #888; font-family: monospace; font-size: 11px; display: none; align-items: center; padding: 0 12px; z-index: 99999; border-top: 1px solid #3a3a5e; gap: 6px; overflow-x: auto; }
+  #edit-breadcrumb.show { display: flex; }
+  #edit-breadcrumb .bc-item { color: #e0c488; cursor: pointer; padding: 1px 6px; border-radius: 2px; white-space: nowrap; }
+  #edit-breadcrumb .bc-item:hover { background: #2a2a4e; }
+  #edit-breadcrumb .bc-sep { color: #555; }
+
+  /* 新增/删除按钮 */
+  .pp-btn-row { display: flex; gap: 4px; margin-top: 4px; }
+  .pp-add, .pp-del { padding: 4px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; flex: 1; text-align: center; }
+  .pp-add { background: #1a3a2a; color: #81c784; border: 1px solid #2a5a3e; }
+  .pp-add:hover { background: #2a4a3a; }
+  .pp-del { background: #4a1a1a; color: #e57373; border: 1px solid #6a2a2a; }
+  .pp-del:hover { background: #5a2a2a; }
+
+  /* 关键帧编辑输入框 */
+  #prop-panel .kf-input { width: 100%; background: #0a0a1e; color: #e0c488; border: 1px solid #3a3a5e; padding: 3px 5px; font-size: 10px; font-family: monospace; border-radius: 2px; margin-bottom: 3px; box-sizing: border-box; }
+  #prop-panel .kf-input:focus { border-color: #4fc3f7; outline: none; }

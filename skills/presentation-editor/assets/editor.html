@@ -1,0 +1,99 @@
+<div id="editor-bar">
+  <span class="eb-title">编辑模式 v5.1</span>
+  <span class="eb-tag" id="eb-selected-tag">未选中</span>
+  <span class="eb-hint">点击选中 | 拖拽移动 | U父级 D子级 | Ctrl+Z撤销 | Ctrl+Y重做 | 双击改字 | E退出</span>
+  <span id="undo-status" style="margin-left:auto;color:#4caf50;font-weight:bold;font-size:12px;"></span>
+  <span id="autosave-status" title="修改会自动保存到浏览器本地，刷新后自动恢复">自动保存：就绪</span>
+  <button class="eb-btn eb-btn-primary" onclick="window.__editor.export()">导出HTML</button>
+  <button class="eb-btn" onclick="window.__editor.saveLocal()">保存</button>
+  <button class="eb-btn" onclick="window.__editor.revertLocal()" title="丢弃本地保存，恢复到文件原始状态">还原</button>
+  <button class="eb-btn" onclick="window.__editor.exit()">退出</button>
+</div>
+<div id="prop-panel">
+  <div id="pp-header">
+    <span id="pp-header-title">属性面板</span>
+    <button type="button" id="pp-toggle" title="折叠 / 展开属性栏">▾ 折叠</button>
+  </div>
+  <div id="pp-body">
+  <div class="pp-section">
+    <div class="pp-section-title">文字内容</div>
+    <textarea id="pp-text" oninput="window.__editor.setText(this.value)"></textarea>
+  </div>
+  <div class="pp-section">
+    <div class="pp-section-title">文字样式</div>
+    <label>字体</label>
+    <select class="pp-select" id="pp-fontfamily" onchange="window.__editor.setFontFamily(this.value)">
+      <option value="">默认</option>
+      <option value="Noto Sans SC, sans-serif">黑体 (无衬线)</option>
+      <option value="Noto Serif SC, serif">宋体 (衬线)</option>
+      <option value="Noto Sans Mono, monospace">等宽</option>
+    </select>
+    <label>字号</label><input type="number" id="pp-fontsize" oninput="window.__editor.setFontSize(this.value)">
+    <label>颜色</label><input type="text" id="pp-color" oninput="window.__editor.setColor(this.value)">
+    <label>字重</label>
+    <select class="pp-select" id="pp-weight" onchange="window.__editor.setFontWeight(this.value)">
+      <option value="">默认</option>
+      <option value="300">细体 (300)</option>
+      <option value="400">常规 (400)</option>
+      <option value="500">中等 (500)</option>
+      <option value="700">粗体 (700)</option>
+      <option value="900">特粗 (900)</option>
+    </select>
+    <label>对齐</label>
+    <select class="pp-select" id="pp-align" onchange="window.__editor.setTextAlign(this.value)">
+      <option value="">默认</option>
+      <option value="left">左对齐</option>
+      <option value="center">居中</option>
+      <option value="right">右对齐</option>
+    </select>
+    <label>行高(px)</label><input type="number" step="1" id="pp-lineheight" oninput="window.__editor.setLineHeight(this.value)">
+    <label>字间距</label><input type="number" step="1" id="pp-letterspacing" oninput="window.__editor.setLetterSpacing(this.value)">
+  </div>
+  <div class="pp-section">
+    <div class="pp-section-title">位置 / 尺寸</div>
+    <div class="pp-row"><input type="number" id="pp-x" placeholder="X" oninput="window.__editor.setX(this.value)"><input type="number" id="pp-y" placeholder="Y" oninput="window.__editor.setY(this.value)"></div>
+    <div class="pp-row"><input type="number" id="pp-w" placeholder="宽" oninput="window.__editor.setW(this.value)"><input type="number" id="pp-h" placeholder="高" oninput="window.__editor.setH(this.value)"></div>
+  </div>
+  <div class="pp-section">
+    <div class="pp-section-title">外观</div>
+    <label>背景色</label><input type="text" id="pp-bg" oninput="window.__editor.setBg(this.value)">
+    <label>边框色</label><input type="text" id="pp-border" oninput="window.__editor.setBorder(this.value)">
+    <label>边框宽</label><input type="number" id="pp-borderw" oninput="window.__editor.setBorderW(this.value)">
+    <label>圆角</label><input type="number" id="pp-radius" oninput="window.__editor.setRadius(this.value)">
+    <label>透明度</label><input type="number" id="pp-opacity" step="0.1" min="0" max="1" oninput="window.__editor.setOpacity(this.value)">
+  </div>
+  <div class="pp-section">
+    <div class="pp-section-title">动画</div>
+    <label>动画类型</label>
+    <select id="pp-anim-type" onchange="window.__editor.setAnimType(this.value)">
+      <option value="">无</option>
+      <option value="anim">渐显上浮</option>
+      <option value="anim-fade">渐显</option>
+      <option value="anim-scale">缩放进入</option>
+      <option value="anim-slide-left">左滑入</option>
+      <option value="anim-slide-right">右滑入</option>
+      <option value="anim-slide-up">上滑入</option>
+      <option value="anim-bounce">弹跳</option>
+      <option value="anim-stagger">逐条渐显</option>
+    </select>
+    <label>延迟(秒)</label><input type="number" id="pp-anim-delay" step="0.1" min="0" oninput="window.__editor.setAnimDelay(this.value)">
+    <label>时长(秒)</label><input type="number" id="pp-anim-duration" step="0.1" min="0" oninput="window.__editor.setAnimDuration(this.value)">
+    <label>开始帧 (from)</label>
+    <input class="kf-input" id="kf-from-input" placeholder="如: opacity:0; translateY(20px)" onchange="window.__editor.setKeyframe('from', this.value)">
+    <label>结束帧 (to)</label>
+    <input class="kf-input" id="kf-to-input" placeholder="如: opacity:1; translateY(0)" onchange="window.__editor.setKeyframe('to', this.value)">
+    <button class="pp-preview" onclick="window.__editor.previewAnim()">预览动画</button>
+  </div>
+  <div class="pp-section">
+    <div class="pp-section-title">元素操作</div>
+    <div class="pp-btn-row">
+      <button class="pp-add" onclick="window.__editor.addElement()">+ 新增元素</button>
+      <button class="pp-del" onclick="window.__editor.deleteElement()">- 删除元素</button>
+    </div>
+  </div>
+  <div class="pp-section" style="border-bottom:none;">
+    <button class="pp-reset" onclick="window.__editor.resetChanges()">重置选中元素</button>
+  </div>
+  </div>
+</div>
+<div id="edit-breadcrumb"></div>
